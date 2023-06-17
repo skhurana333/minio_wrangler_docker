@@ -25,24 +25,25 @@ EXPOSE 9000
 EXPOSE 9001
 
 
-# s3 setup
+# awscli setup
 RUN pip3 --no-cache-dir install --upgrade awscli
+RUN pip3 install s3fs
 
 # aws configure
 ENV AWS_ACCESS_KEY_ID=admin
 ENV AWS_SECRET_ACCESS_KEY=password
-ENV AWS_DEFAULT_REGION=us-west-2>
+ENV AWS_DEFAULT_REGION=us-west-2
 
-COPY aws-config ~/.aws/config
-COPY aws-credentials ~/.aws/credentials 
+RUN aws --profile minio configure set aws_access_key_id "admin"
+RUN aws --profile minio configure set aws_secret_access_key "password"
 
-RUN aws configure  --profile minio
+
 
 # minio client  \
 #RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc 
 #RUN chmod +x mc 
 #RUN sudo mv mc /usr/local/bin/mc
-#RUN mc alias set local http://127.0.0.1:9000 minioadmin minioadmin
+#RUN mc alias set local http://127.0.0.1:9000 admin password
 #RUN mc admin info local
 
 
@@ -53,7 +54,16 @@ RUN aws configure  --profile minio
 
 RUN pip3 install  "awswrangler[ray,modin]"
 
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN ["chmod", "+x", "/docker-entrypoint.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
 CMD sleep infinity
+
+# to run this docker
+#  docker run -d   -v ~/:/hostdata  -p 9001:9001 -p 9000:9000  skhurana333/wrangler
+# aws s3
+#    aws --endpoint-url http://127.0.0.1:9000 s3 ls
 
 
 
